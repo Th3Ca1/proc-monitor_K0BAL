@@ -1,10 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>K0BAL</title>
+  <meta charset="UTF-8">
+  <title>K0BAL // CONTAINMENT</title>
+
+  <!-- Prevent scaling, feels more locked-down -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <!-- No favicon on purpose (blank tab = unsettling) -->
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+  <!-- Subtle screen noise layer -->
+  <div id="noise"></div>
+
+  <!-- Main containment area -->
+  <div id="containment">
+
+    <!-- K0BAL entity -->
+    <div id="k0bal">
+      <!-- Face / core -->
+      <div id="core"></div>
+
+      <!-- Eyes -->
+      <div class="eye left"></div>
+      <div class="eye right"></div>
+
+      <!-- Cracks / damage -->
+      <div class="crack c1"></div>
+      <div class="crack c2"></div>
+    </div>
+
+  </div>
+
+  <!-- Hidden system text (used later, not visible yet) -->
+  <div id="system-log"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
