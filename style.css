@@ -1,79 +1,109 @@
 const k0bal = document.getElementById("k0bal");
-const eyes = document.querySelectorAll(".eye-glow");
+const eyeGlows = document.querySelectorAll(".eye-glow");
 
-let targetX = window.innerWidth / 2;
-let targetY = window.innerHeight / 2;
-let currentX = targetX;
-let currentY = targetY;
+let leashStrength = 0.06;   // resistance
+let maxRotate = 5;         // restrained movement
+let panicRadius = 90;
+let anger = 0;
 
-let agitation = 0;
-let glitching = false;
-
+// =======================
+// MOUSE TRACKING
+// =======================
 document.addEventListener("mousemove", (e) => {
-  targetX = e.clientX;
-  targetY = e.clientY;
+  const rect = k0bal.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
-
-  const dx = targetX - centerX;
-  const dy = targetY - centerY;
+  const dx = e.clientX - centerX;
+  const dy = e.clientY - centerY;
   const distance = Math.hypot(dx, dy);
 
-  // Cursor too close = agitation rises
-  if (distance < 140) {
-    agitation = Math.min(1, agitation + 0.03);
-    triggerGlitch();
+  // Leashed rotation (body resists)
+  const rotX = Math.max(-maxRotate, Math.min(maxRotate, dx * leashStrength));
+  const rotY = Math.max(-maxRotate, Math.min(maxRotate, dy * leashStrength));
+
+  k0bal.style.transform = `
+    rotateX(${-rotY}deg)
+    rotateY(${rotX}deg)
+  `;
+
+  // Eye glow follows harder (thing inside watches)
+  eyeGlows.forEach((glow, i) => {
+    const lag = i === 0 ? 0.6 : 1.3;
+    const ex = Math.max(-10, Math.min(10, dx * 0.02 * lag));
+    const ey = Math.max(-6, Math.min(6, dy * 0.02 * lag));
+    glow.style.transform = `translate(${ex}px, ${ey}px)`;
+  });
+
+  // Too close = agitation
+  if (distance < panicRadius) {
+    k0bal.style.filter = "contrast(125%) brightness(90%)";
+    twitch();
   } else {
-    agitation = Math.max(0, agitation - 0.01);
+    k0bal.style.filter = "";
   }
 });
 
-function animate() {
-  // Slow, predatory tracking
-  currentX += (targetX - currentX) * 0.05;
-  currentY += (targetY - currentY) * 0.05;
+// =======================
+// CLICK = AGGRESSION
+// =======================
+document.addEventListener("mousedown", () => {
+  anger++;
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const shake = Math.min(10 + anger, 20);
 
-  const dx = currentX - centerX;
-  const dy = currentY - centerY;
-
-  const maxMove = 8 + agitation * 6;
-
-  const moveX = Math.max(-maxMove, Math.min(maxMove, dx / 45));
-  const moveY = Math.max(-maxMove, Math.min(maxMove, dy / 45));
-
-  eyes.forEach((eye, i) => {
-    const jitter = agitation * (Math.random() - 0.5) * 2;
-
-    eye.style.transform = `
-      translate(${moveX + jitter}px, ${moveY - jitter}px)
-      scale(${1 + agitation * 0.15})
-    `;
+  k0bal.animate([
+    { transform: "translate(0,0)" },
+    { transform: `translate(${shake}px, -${shake}px)` },
+    { transform: `translate(-${shake}px, ${shake}px)` },
+    { transform: "translate(0,0)" }
+  ], {
+    duration: 140,
+    iterations: 1
   });
 
-  // Subtle blame-lean
-  k0bal.style.transform = `
-    translate(${moveX * 0.4}px, ${moveY * 0.4}px)
-    rotate(${moveX * 0.03}deg)
-  `;
+  glitchPulse();
+});
 
-  requestAnimationFrame(animate);
+// =======================
+// MICRO TWITCH
+// =======================
+function twitch() {
+  k0bal.style.animation = "none";
+  k0bal.offsetHeight; // reflow
+  k0bal.style.animation = "";
 }
 
-function triggerGlitch() {
-  if (glitching) return;
-  glitching = true;
-
-  k0bal.style.filter = "contrast(130%) brightness(120%)";
-  k0bal.style.transform += " scale(1.02)";
-
+// =======================
+// SCREEN GLITCH
+// =======================
+function glitchPulse() {
+  document.body.style.filter = "hue-rotate(12deg) saturate(140%)";
   setTimeout(() => {
-    k0bal.style.filter = "";
-    glitching = false;
+    document.body.style.filter = "";
   }, 80);
 }
 
-animate();
+// =======================
+// AUTONOMOUS EYE RESET
+// (feels like refocusing)
+// =======================
+setInterval(() => {
+  eyeGlows.forEach(glow => {
+    glow.animate([
+      { transform: glow.style.transform },
+      { transform: "translate(0,0)" }
+    ], {
+      duration: 260,
+      iterations: 1
+    });
+  });
+}, 4500 + Math.random() * 4000);
+
+// =======================
+// ARG CONSOLE CORRUPTION
+// =======================
+setInterval(() => {
+  const garbage = Math.random().toString(36).slice(2);
+  console.log(garbage.repeat(2).slice(0, 26));
+}, 5000);
