@@ -1,79 +1,76 @@
 const k0bal = document.getElementById("k0bal");
-const eyes = document.querySelectorAll(".eye-glow");
+const eyeGlows = document.querySelectorAll(".eye-glow");
 
-let targetX = window.innerWidth / 2;
-let targetY = window.innerHeight / 2;
-let currentX = targetX;
-let currentY = targetY;
-
+let targetX = 0, targetY = 0;
+let currentX = 0, currentY = 0;
 let agitation = 0;
-let glitching = false;
+let anger = 0;
 
 document.addEventListener("mousemove", (e) => {
-  targetX = e.clientX;
-  targetY = e.clientY;
+  // Calculate center of K0BAL
+  const rect = k0bal.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  // Distance from cursor to K0BAL
+  targetX = e.clientX - centerX;
+  targetY = e.clientY - centerY;
 
-  const dx = targetX - centerX;
-  const dy = targetY - centerY;
-  const distance = Math.hypot(dx, dy);
+  const distance = Math.hypot(targetX, targetY);
 
-  // Cursor too close = agitation rises
-  if (distance < 140) {
-    agitation = Math.min(1, agitation + 0.03);
-    triggerGlitch();
+  // Agitation logic
+  if (distance < 150) {
+    agitation = Math.min(1, agitation + 0.05);
+    if (Math.random() > 0.9) triggerGlitch();
   } else {
-    agitation = Math.max(0, agitation - 0.01);
+    agitation = Math.max(0, agitation - 0.02);
   }
 });
 
 function animate() {
-  // Slow, predatory tracking
-  currentX += (targetX - currentX) * 0.05;
-  currentY += (targetY - currentY) * 0.05;
+  // Smooth "predatory" easing
+  currentX += (targetX - currentX) * 0.1;
+  currentY += (targetY - currentY) * 0.1;
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  // Body Rotation
+  const rotX = Math.max(-15, Math.min(15, currentY * -0.05));
+  const rotY = Math.max(-15, Math.min(15, currentX * 0.05));
+  
+  k0bal.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 
-  const dx = currentX - centerX;
-  const dy = currentY - centerY;
-
-  const maxMove = 8 + agitation * 6;
-
-  const moveX = Math.max(-maxMove, Math.min(maxMove, dx / 45));
-  const moveY = Math.max(-maxMove, Math.min(maxMove, dy / 45));
-
-  eyes.forEach((eye, i) => {
-    const jitter = agitation * (Math.random() - 0.5) * 2;
-
-    eye.style.transform = `
-      translate(${moveX + jitter}px, ${moveY - jitter}px)
-      scale(${1 + agitation * 0.15})
-    `;
+  // Eye movement
+  eyeGlows.forEach((glow) => {
+    const jitter = agitation * (Math.random() - 0.5) * 5;
+    const ex = Math.max(-15, Math.min(15, currentX * 0.08)) + jitter;
+    const ey = Math.max(-10, Math.min(10, currentY * 0.08)) + jitter;
+    glow.style.transform = `translate(${ex}px, ${ey}px) scale(${1 + agitation * 0.5})`;
   });
-
-  // Subtle blame-lean
-  k0bal.style.transform = `
-    translate(${moveX * 0.4}px, ${moveY * 0.4}px)
-    rotate(${moveX * 0.03}deg)
-  `;
 
   requestAnimationFrame(animate);
 }
 
+// Click to increase anger
+document.addEventListener("mousedown", () => {
+  anger += 5;
+  k0bal.animate([
+    { transform: "translate(0,0) scale(1)" },
+    { transform: `translate(${10 + anger}px, 0) scale(1.1)` },
+    { transform: "translate(0,0) scale(1)" }
+  ], { duration: 100 });
+  
+  document.body.style.backgroundColor = "#1a0000";
+  setTimeout(() => document.body.style.backgroundColor = "#0a0a0a", 50);
+});
+
 function triggerGlitch() {
-  if (glitching) return;
-  glitching = true;
-
-  k0bal.style.filter = "contrast(130%) brightness(120%)";
-  k0bal.style.transform += " scale(1.02)";
-
-  setTimeout(() => {
-    k0bal.style.filter = "";
-    glitching = false;
-  }, 80);
+  k0bal.style.filter = `contrast(${150 + agitation * 100}%) brightness(150%)`;
+  setTimeout(() => k0bal.style.filter = "", 50);
 }
+
+// Creepy Console Logs
+setInterval(() => {
+  const messages = ["I SEE YOU", "STOP MOVING", "K0BAL IS WATCHING", "01001000 01000101 01001100 01010000"];
+  console.log(messages[Math.floor(Math.random() * messages.length)]);
+}, 4000);
 
 animate();
